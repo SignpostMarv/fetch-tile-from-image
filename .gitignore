@@ -1,0 +1,5 @@
+lib/images/*
+
+# package managers
+node_modules
+bower_components
