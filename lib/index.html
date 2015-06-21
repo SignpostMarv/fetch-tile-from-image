@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<script src="../bower_components/requirejs/require.js"></script>
+<script src="../bower_components/localforage/dist/localforage.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+require([
+  './js/FetchTileFromImage.js',
+  './js/RangeIterator.js',
+  '../bower_components/localforage-silo/Silo.js',
+  'localforage',
+  '../bower_components/fastdom/index.js',
+  '../bower_components/asmcrypto/asmcrypto.js',
+  '../bower_components/blueimp-canvas-to-blob/js/canvas-to-blob.js'
+], function(
+  FetchTileFromImage,
+  RangeIterator,
+  Silo,
+  localforage,
+  fastDom
+){
+  'use strict';
+  var
+    img = new FetchTileFromImage(
+      './images/WorldColorMap.jpg',
+      {
+        hash: asmCrypto.SHA256.hex,
+        Silo: new Silo('fetch-tile-from-image')
+      }
+    )
+  ;
+  return;
+  window.localforage = localforage;
+  window.foo = img;
+  img.MipMapAtlas().then(function(mipMap){
+    document.body.appendChild(mipMap);
+  });
+  return;
+  img.ResizePow2().then(function(newImg){
+    newImg.Image().then(function(newImgElement){
+      document.body.appendChild(newImgElement);
+    });
+  });
+  return;
+  img.Dimensions().then(function(dim){
+    img.Resize(dim.width / 4, dim.height / 4).then(function(newImg){
+      newImg.Image().then(function(newImgElement){
+        document.body.appendChild(newImgElement);
+      });
+    });
+  });
+  return;
+  img.Dimensions().then(function(dim){
+    var
+      maxTileX = (Math.ceil(dim.width / 256) - 1),
+      maxTileY = (Math.ceil(dim.height / 256) - 1),
+      table = document.createElement('table'),
+      tbody = document.createElement('tbody'),
+      getTile = function(x, y, td){
+        img.tile(x * 256, y * 256, 256, 256).then(function(tile){
+          fastDom.write(function(){
+            td.appendChild(tile);
+          });
+        }, function(failure){
+          console.warn(failure);
+        }).catch(function(failure){
+          console.error(failure);
+        })
+      }
+    ;
+    table.appendChild(tbody);
+    for(var y of RangeIterator.range(0, maxTileY)){
+      var
+        tr = document.createElement('tr')
+      ;
+      for(var x of RangeIterator.range(0, maxTileX)){
+        var
+          td = document.createElement('td')
+        ;
+        tr.appendChild(td);
+        getTile(x, y, td);
+      }
+      tbody.appendChild(tr);
+    }
+    fastDom.write(function(){
+      document.body.appendChild(table);
+    });
+  });
+  window.localforage = localforage;
+});
+</script>
+</body>
+</html>
